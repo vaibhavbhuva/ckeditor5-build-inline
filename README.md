@@ -1,4 +1,4 @@
-CKEditor 5 inline editor build
+CKEditor 5 custom inline editor build
 ==============================================
 
 
