@@ -1,9 +1,84 @@
 CKEditor 5 inline editor build
 ==============================================
 
-<h3 align=center>⚠⚠ This repository was moved ⚠⚠</h3>
 
-<p align=center>The package was moved to the <a href="https://github.com/ckeditor/ckeditor5/tree/master/packages">main repository</a>.</p>
+* ```Custom image resize plugin```
+
+========================================
+
+To disbale image resizing (By Mouse): 
+
+And use it in your website:
+```html
+<div id="editor">
+	<p>This is the editor content.</p>
+</div>
+<script src="./node_modules/@ckeditor/ckeditor5-custom-build-inline/build/ckeditor.js"></script>
+<script>
+		function CustomImageResizer(editor) {
+			editor.conversion.for('downcast').add(dispatcher => {
+				dispatcher.on('attribute:width:image', (evt, data, conversionApi) => {
+					if (!conversionApi.consumable.consume(data.item, evt.name)) {
+						return;
+					}
+					const options = editor.config.get('image.resizeOptions');
+					const isEnabled = editor.config.get('image.resizeEnabled');
+					const sizeLables = options.map((item) => {
+						return item.label;
+					})
+					const attributeNewValue = data.attributeNewValue === null ? "Original" : data.attributeNewValue;
+					if (!isEnabled && sizeLables.length > 0 && !sizeLables.includes(attributeNewValue)) {
+						editor.execute('imageResize', { width: data.attributeOldValue });
+						return evt.stop();
+					}
+
+					const viewWriter = conversionApi.writer;
+					const figure = conversionApi.mapper.toViewElement(data.item);
+
+					if (data.attributeNewValue !== null) {
+						viewWriter.setStyle('width', data.attributeNewValue, figure);
+						viewWriter.addClass('image_resized', figure);
+					} else {
+						viewWriter.removeStyle('width', figure);
+						viewWriter.removeClass('image_resized', figure);
+					}
+				})
+			});
+		}
+
+		InlineEditor.create(document.querySelector('#editor'), {
+			extraPlugins: [CustomImageResizer],
+			image: {
+				resizeEnabled: false, // You can also disable/enable this feature by setting resizeEnabled configuration option to false OR true.
+				resizeOptions: [
+					{
+						name: 'imageResize:original',
+						label: 'Original',
+						value: null
+					},
+					{
+						name: 'imageResize:50',
+						label: '50%',
+						value: '50'
+					},
+					{
+						name: 'imageResize:75',
+						label: '75%',
+						value: '75'
+					}
+				],
+				toolbar: ['imageResize']
+			}
+		})
+			.then(editor => {
+				window.editor = editor;
+			})
+			.catch(error => {
+				console.error('There was a problem initializing the editor.', error);
+			});
+	</script>
+```
+
 
 [![npm version](https://badge.fury.io/js/%40ckeditor%2Fckeditor5-build-inline.svg)](https://www.npmjs.com/package/@ckeditor/ckeditor5-build-inline)
 [![Dependency Status](https://david-dm.org/ckeditor/ckeditor5-build-inline/status.svg)](https://david-dm.org/ckeditor/ckeditor5-build-inline)
@@ -27,7 +102,7 @@ See:
 First, install the build from npm:
 
 ```bash
-npm install --save @ckeditor/ckeditor5-build-inline
+npm install --save @ckeditor/ckeditor5-custom-build-inline
 ```
 
 And use it in your website:
@@ -36,7 +111,7 @@ And use it in your website:
 <div id="editor">
 	<p>This is the editor content.</p>
 </div>
-<script src="./node_modules/@ckeditor/ckeditor5-build-inline/build/ckeditor.js"></script>
+<script src="./node_modules/@ckeditor/ckeditor5-custom-build-inline/build/ckeditor.js"></script>
 <script>
 	InlineEditor
 		.create( document.querySelector( '#editor' ) )
@@ -52,10 +127,10 @@ And use it in your website:
 Or in your JavaScript application:
 
 ```js
-import InlineEditor from '@ckeditor/ckeditor5-build-inline';
+import InlineEditor from '@ckeditor/ckeditor5-custom-build-inline';
 
 // Or using the CommonJS version:
-// const InlineEditor = require( '@ckeditor/ckeditor5-build-inline' );
+// const InlineEditor = require( '@ckeditor/ckeditor5-custom-build-inline' );
 
 InlineEditor
 	.create( document.querySelector( '#editor' ) )

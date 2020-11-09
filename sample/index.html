@@ -1,41 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="utf-8">
-	<title>CKEditor 5 – inline editor build – development sample</title>
+	<title>CKEditor 5 – custom inline editor build – development sample</title>
 	<style>
 		body {
 			max-width: 800px;
 			margin: 20px auto;
 		}
+
+		.ck.ck-editor__editable_inline {
+			border: 1px solid #aaaaaa !important;
+		}
 	</style>
 </head>
+
 <body>
 
-<h1>CKEditor 5 – inline editor build – development sample</h1>
+	<h1>CKEditor 5 – custom inline editor build – development sample</h1>
 
-<div id="editor">
-	<h2>Sample</h2>
+	<div id="editor">
+		<h2>Sample</h2>
 
-	<p>This is an instance of the <a href="https://ckeditor.com/docs/ckeditor5/latest/builds/guides/overview.html#inline-editor">inline editor build</a>.</p>
+		<p>This is an instance of the <a
+				href="https://ckeditor.com/docs/ckeditor5/latest/builds/guides/overview.html#inline-editor">custom
+				inline editor build</a>.</p>
 
-	<figure class="image">
-		<img src="../tests/manual/sample.jpg" alt="Autumn fields" />
-	</figure>
+		<figure class="image">
+			<img src="../tests/manual/sample.jpg" alt="Autumn fields" />
+		</figure>
 
-	<p>You can use this sample to validate whether your <a href="https://ckeditor.com/docs/ckeditor5/latest/builds/guides/development/custom-builds.html">custom build</a> works fine.</p>
-</div>
+		<p>You can use this sample to validate whether your <a
+				href="https://ckeditor.com/docs/ckeditor5/latest/builds/guides/development/custom-builds.html">custom
+				build</a> works fine.</p>
+	</div>
 
-<script src="../build/ckeditor.js"></script>
-<script>
-	InlineEditor.create( document.querySelector( '#editor' ) )
-		.then( editor => {
-			window.editor = editor;
-		} )
-		.catch( error => {
-			console.error( 'There was a problem initializing the editor.', error );
-		} );
-</script>
+	<script src="../build/ckeditor.js"></script>
+	<script>
+		function CustomImageResizer(editor) {
+			// Both the data and the editing pipelines are affected by this conversion.
+			editor.conversion.for('downcast').add(dispatcher => {
+				// Links are represented in the model as a "linkHref" attribute.
+				// Use the "low" listener priority to apply the changes after the link feature.
+				dispatcher.on('attribute:width:image', (evt, data, conversionApi) => {
+					if (!conversionApi.consumable.consume(data.item, evt.name)) {
+						return;
+					}
+					const options = editor.config.get('image.resizeOptions');
+					const isEnabled = editor.config.get('image.resizeEnabled');
+					const sizeLables = options.map((item) => {
+						return item.label;
+					})
+					const attributeNewValue = data.attributeNewValue === null ? "Original" : data.attributeNewValue;
+					if (!isEnabled && sizeLables.length > 0 && !sizeLables.includes(attributeNewValue)) {
+						editor.execute('imageResize', { width: data.attributeOldValue });
+						return evt.stop();
+					}
+
+					const viewWriter = conversionApi.writer;
+					const figure = conversionApi.mapper.toViewElement(data.item);
+
+					if (data.attributeNewValue !== null) {
+						viewWriter.setStyle('width', data.attributeNewValue, figure);
+						viewWriter.addClass('image_resized', figure);
+					} else {
+						viewWriter.removeStyle('width', figure);
+						viewWriter.removeClass('image_resized', figure);
+					}
+				})
+			});
+		}
+
+		InlineEditor.create(document.querySelector('#editor'), {
+			extraPlugins: [CustomImageResizer],
+			toolbar: {
+				items: [
+					'bold',
+					'italic',
+					'underline',
+					'numberedList',
+					'fontSize',
+					'superscript',
+					'subscript',
+					'imageUpload',
+					'link'
+				]
+			},
+			fontSize: {
+				options: [
+					9,
+					11,
+					13,
+					15,
+					17,
+					19,
+					21,
+					23,
+					25
+				]
+			},
+			image: {
+				resizeEnabled: false,
+				resizeOptions: [
+					{
+						name: 'imageResize:original',
+						label: 'Original',
+						value: null
+					},
+					{
+						name: 'imageResize:50',
+						label: '50%',
+						value: '50'
+					},
+					{
+						name: 'imageResize:75',
+						label: '75%',
+						value: '75'
+					}
+				],
+				toolbar: ['imageStyle:alignLeft', 'imageStyle:full', 'imageStyle:alignRight', '|',
+					'imageResize'],
+				styles: ['full', 'alignLeft', 'alignRight', 'alignCenter']
+			},
+			removePlugins: ['ImageCaption']
+		})
+			.then(editor => {
+				window.editor = editor;
+			})
+			.catch(error => {
+				console.error('There was a problem initializing the editor.', error);
+			});
+	</script>
 
 </body>
+
 </html>
