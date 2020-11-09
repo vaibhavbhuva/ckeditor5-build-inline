@@ -29,7 +29,6 @@ import PasteFromOffice from '@ckeditor/ckeditor5-paste-from-office/src/pastefrom
 import TextTransformation from '@ckeditor/ckeditor5-typing/src/texttransformation';
 import Font from '@ckeditor/ckeditor5-font/src/font';
 
-
 export default class InlineEditor extends InlineEditorBase {}
 
 // Plugins to include in the build.
